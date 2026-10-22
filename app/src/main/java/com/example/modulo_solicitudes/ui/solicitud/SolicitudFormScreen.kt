@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,10 +41,15 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -79,6 +86,29 @@ fun SolicitudFormScreen(
     val context = LocalContext.current
     var showCameraX by remember { mutableStateOf(false) }
     var showSavedConfirmation by remember { mutableStateOf(false) }
+    var expandedCategoria by remember { mutableStateOf(false) }
+    var expandedServicio by remember { mutableStateOf(false) }
+
+    val categoriasPredeterminadas = remember {
+        listOf(
+            "Soporte Técnico",
+            "Reclamo o Queja",
+            "Consulta General",
+            "Solicitud de Cambio",
+            "Incidencia Crítica"
+        )
+    }
+
+    val serviciosPredeterminados = remember {
+        listOf(
+            "Redes y Conectividad",
+            "Soporte de Hardware",
+            "Sistemas y Software",
+            "Facturación y Pagos",
+            "Seguridad e Identidad"
+        )
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(showSavedConfirmation) {
@@ -220,39 +250,76 @@ fun SolicitudFormScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Categoría
-                    OutlinedTextField(
-                        value = uiState.categoria,
-                        onValueChange = { viewModel.onCategoriaChange(it) },
-                        label = { Text("Categoría * (mínimo 3 caracteres)") },
-                        placeholder = { Text("ej. Soporte Técnico, Reclamo, Consulta") },
-                        isError = uiState.categoriaError != null,
-                        supportingText = {
-                            AnimatedVisibility(
-                                visible = uiState.categoriaError != null,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
-                            ) {
-                                uiState.categoriaError?.let {
-                                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                    // Dropdown de Categoría (Solo Selección)
+                    ExposedDropdownMenuBox(
+                        expanded = expandedCategoria,
+                        onExpandedChange = { expandedCategoria = !expandedCategoria }
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.categoria,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Categoría *") },
+                            placeholder = { Text("Selecciona una categoría de la lista") },
+                            isError = uiState.categoriaError != null,
+                            supportingText = {
+                                AnimatedVisibility(
+                                    visible = uiState.categoriaError != null,
+                                    enter = fadeIn() + expandVertically(),
+                                    exit = fadeOut() + shrinkVertically()
+                                ) {
+                                    uiState.categoriaError?.let {
+                                        Text(text = it, color = MaterialTheme.colorScheme.error)
+                                    }
                                 }
-                            }
-                        },
-                        trailingIcon = {
-                            if (uiState.categoriaError != null || uiState.categoria.isNotBlank()) {
-                                Icon(
-                                    imageVector = if (uiState.categoriaError == null) Icons.Default.CheckCircle
-                                    else Icons.Default.ErrorOutline,
-                                    contentDescription = null,
-                                    tint = if (uiState.categoriaError == null) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.error
+                            },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoria)
+                            },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expandedCategoria,
+                            onDismissRequest = { expandedCategoria = false }
+                        ) {
+                            categoriasPredeterminadas.forEach { opcion ->
+                                DropdownMenuItem(
+                                    text = { Text(opcion) },
+                                    onClick = {
+                                        viewModel.onCategoriaChange(opcion)
+                                        expandedCategoria = false
+                                    }
                                 )
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
+                        }
+                    }
+
+                    // Chips de selección rápida para Categoría
+                    Text(
+                        text = "Categorías comunes:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
                     )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(items = categoriasPredeterminadas) { opcion ->
+                            FilterChip(
+                                selected = uiState.categoria == opcion,
+                                onClick = { viewModel.onCategoriaChange(opcion) },
+                                label = { Text(opcion, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
                 }
 
                 // Sección 2: Servicio y Descripción
@@ -260,39 +327,76 @@ fun SolicitudFormScreen(
                     title = "2. Detalle del Servicio",
                     icon = Icons.Default.Build
                 ) {
-                    // Servicio Relacionado
-                    OutlinedTextField(
-                        value = uiState.servicio,
-                        onValueChange = { viewModel.onServicioChange(it) },
-                        label = { Text("Servicio Relacionado * (mínimo 3 caracteres)") },
-                        placeholder = { Text("ej. Facturación, Red, Equipo") },
-                        isError = uiState.servicioError != null,
-                        supportingText = {
-                            AnimatedVisibility(
-                                visible = uiState.servicioError != null,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
-                            ) {
-                                uiState.servicioError?.let {
-                                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                    // Dropdown de Servicio Relacionado (Solo Selección)
+                    ExposedDropdownMenuBox(
+                        expanded = expandedServicio,
+                        onExpandedChange = { expandedServicio = !expandedServicio }
+                    ) {
+                        OutlinedTextField(
+                            value = uiState.servicio,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Servicio Relacionado *") },
+                            placeholder = { Text("Selecciona un servicio de la lista") },
+                            isError = uiState.servicioError != null,
+                            supportingText = {
+                                AnimatedVisibility(
+                                    visible = uiState.servicioError != null,
+                                    enter = fadeIn() + expandVertically(),
+                                    exit = fadeOut() + shrinkVertically()
+                                ) {
+                                    uiState.servicioError?.let {
+                                        Text(text = it, color = MaterialTheme.colorScheme.error)
+                                    }
                                 }
-                            }
-                        },
-                        trailingIcon = {
-                            if (uiState.servicioError != null || uiState.servicio.isNotBlank()) {
-                                Icon(
-                                    imageVector = if (uiState.servicioError == null) Icons.Default.CheckCircle
-                                    else Icons.Default.ErrorOutline,
-                                    contentDescription = null,
-                                    tint = if (uiState.servicioError == null) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.error
+                            },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedServicio)
+                            },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = expandedServicio,
+                            onDismissRequest = { expandedServicio = false }
+                        ) {
+                            serviciosPredeterminados.forEach { opcion ->
+                                DropdownMenuItem(
+                                    text = { Text(opcion) },
+                                    onClick = {
+                                        viewModel.onServicioChange(opcion)
+                                        expandedServicio = false
+                                    }
                                 )
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp)
+                        }
+                    }
+
+                    // Chips de selección rápida de los 5 servicios
+                    Text(
+                        text = "Servicios comunes:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
                     )
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(serviciosPredeterminados) { opcion ->
+                            FilterChip(
+                                selected = uiState.servicio == opcion,
+                                onClick = { viewModel.onServicioChange(opcion) },
+                                label = { Text(opcion, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
