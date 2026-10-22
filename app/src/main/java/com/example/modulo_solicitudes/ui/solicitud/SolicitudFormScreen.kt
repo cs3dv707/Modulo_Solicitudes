@@ -188,7 +188,7 @@ fun SolicitudFormScreen(
                     OutlinedTextField(
                         value = uiState.titulo,
                         onValueChange = { viewModel.onTituloChange(it) },
-                        label = { Text("Título de la Solicitud *") },
+                        label = { Text("Título de la Solicitud * (mínimo 5 caracteres)") },
                         placeholder = { Text("ej. Problema con conexión de red") },
                         isError = uiState.tituloError != null,
                         supportingText = {
@@ -224,7 +224,7 @@ fun SolicitudFormScreen(
                     OutlinedTextField(
                         value = uiState.categoria,
                         onValueChange = { viewModel.onCategoriaChange(it) },
-                        label = { Text("Categoría *") },
+                        label = { Text("Categoría * (mínimo 3 caracteres)") },
                         placeholder = { Text("ej. Soporte Técnico, Reclamo, Consulta") },
                         isError = uiState.categoriaError != null,
                         supportingText = {
@@ -264,7 +264,7 @@ fun SolicitudFormScreen(
                     OutlinedTextField(
                         value = uiState.servicio,
                         onValueChange = { viewModel.onServicioChange(it) },
-                        label = { Text("Servicio Relacionado *") },
+                        label = { Text("Servicio Relacionado * (mínimo 3 caracteres)") },
                         placeholder = { Text("ej. Facturación, Red, Equipo") },
                         isError = uiState.servicioError != null,
                         supportingText = {
@@ -300,7 +300,7 @@ fun SolicitudFormScreen(
                     OutlinedTextField(
                         value = uiState.descripcion,
                         onValueChange = { viewModel.onDescripcionChange(it) },
-                        label = { Text("Descripción del Requerimiento *") },
+                        label = { Text("Descripción * (10 a 500 caracteres)") },
                         placeholder = { Text("Describe detalladamente la solicitud (mínimo 10 caracteres)") },
                         isError = uiState.descripcionError != null,
                         supportingText = {
