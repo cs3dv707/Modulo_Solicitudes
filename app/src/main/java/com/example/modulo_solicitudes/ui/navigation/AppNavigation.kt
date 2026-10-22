@@ -12,6 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.modulo_solicitudes.data.local.AppDatabase
 import com.example.modulo_solicitudes.data.repository.SolicitudRepository
+import com.example.modulo_solicitudes.ui.login.LoginScreen
+import com.example.modulo_solicitudes.ui.login.LoginViewModel
 import com.example.modulo_solicitudes.ui.solicitud.ListaSolicitudesScreen
 import com.example.modulo_solicitudes.ui.solicitud.QrScannerScreen
 import com.example.modulo_solicitudes.ui.solicitud.SolicitudDetailScreen
@@ -24,19 +26,31 @@ import kotlinx.coroutines.launch
 fun AppNavigation(database: AppDatabase) {
     val navController = rememberNavController()
     val repository = SolicitudRepository(database.solicitudDao())
-    val viewModel: SolicitudViewModel = viewModel(
+    val solicitudViewModel: SolicitudViewModel = viewModel(
         factory = SolicitudViewModel.provideFactory(repository)
     )
+    val loginViewModel: LoginViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = "lista_solicitudes"
+        startDestination = "login"
     ) {
+        composable("login") {
+            LoginScreen(
+                viewModel = loginViewModel,
+                onLoginSuccess = {
+                    navController.navigate("lista_solicitudes") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable("lista_solicitudes") {
             ListaSolicitudesScreen(
-                viewModel = viewModel,
+                viewModel = solicitudViewModel,
                 onNavigateToForm = {
-                    viewModel.resetFormulario()
+                    solicitudViewModel.resetFormulario()
                     navController.navigate("formulario_solicitud")
                 },
                 onNavigateToQrScanner = {
@@ -44,15 +58,21 @@ fun AppNavigation(database: AppDatabase) {
                 },
                 onSolicitudClick = { solicitudId ->
                     navController.navigate("detalle_solicitud/$solicitudId")
+                },
+                onLogout = {
+                    loginViewModel.resetState()
+                    navController.navigate("login") {
+                        popUpTo("lista_solicitudes") { inclusive = true }
+                    }
                 }
             )
         }
 
         composable("formulario_solicitud") {
             SolicitudFormScreen(
-                viewModel = viewModel,
+                viewModel = solicitudViewModel,
                 onBack = {
-                    viewModel.resetFormulario()
+                    solicitudViewModel.resetFormulario()
                     navController.popBackStack()
                 }
             )
@@ -95,7 +115,7 @@ fun AppNavigation(database: AppDatabase) {
             val id = backStackEntry.arguments?.getLong("solicitudId") ?: 0L
             SolicitudDetailScreen(
                 solicitudId = id,
-                viewModel = viewModel,
+                viewModel = solicitudViewModel,
                 onBack = {
                     navController.popBackStack()
                 }
