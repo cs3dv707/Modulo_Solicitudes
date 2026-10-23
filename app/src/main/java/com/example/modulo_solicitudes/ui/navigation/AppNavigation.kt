@@ -71,10 +71,6 @@ fun AppNavigation(database: AppDatabase) {
         composable("lista_solicitudes") {
             ListaSolicitudesScreen(
                 viewModel = solicitudViewModel,
-                onNavigateToForm = {
-                    solicitudViewModel.resetFormulario()
-                    navController.navigate("formulario_solicitud")
-                },
                 onSolicitudClick = { solicitudId ->
                     navController.navigate("detalle_solicitud/$solicitudId")
                 },

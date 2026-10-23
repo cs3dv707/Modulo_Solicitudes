@@ -81,7 +81,6 @@ import java.util.Locale
 @Composable
 fun ListaSolicitudesScreen(
     viewModel: SolicitudViewModel,
-    onNavigateToForm: () -> Unit,
     onSolicitudClick: (Long) -> Unit,
     onBack: () -> Unit
 ) {
@@ -172,15 +171,6 @@ fun ListaSolicitudesScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToForm,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Nueva Solicitud")
-            }
         }
     ) { paddingValues ->
         Column(
@@ -314,20 +304,12 @@ fun ListaSolicitudesScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (solicitudes.isEmpty()) "Crea tu primera solicitud presionando el botón + o escanea un código QR existente."
+                            text = if (solicitudes.isEmpty()) "No hay solicitudes registradas en el sistema actualmente."
                             else "Prueba ajustando los términos de búsqueda o el filtro seleccionado.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
-                        if (solicitudes.isEmpty()) {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            Button(onClick = onNavigateToForm) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Registrar Nueva Solicitud")
-                            }
-                        }
                     }
                 }
             } else {
