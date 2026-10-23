@@ -25,16 +25,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -61,12 +59,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.modulo_solicitudes.data.local.SolicitudEntity
+import com.example.modulo_solicitudes.ui.login.UserRole
 import com.example.modulo_solicitudes.ui.theme.StatusEnProcesoBg
 import com.example.modulo_solicitudes.ui.theme.StatusEnProcesoFg
 import com.example.modulo_solicitudes.ui.theme.StatusRecibidaBg
@@ -80,11 +78,14 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListaSolicitudesScreen(
+    userRole: UserRole,
     viewModel: SolicitudViewModel,
+    onNavigateToForm: () -> Unit,
     onSolicitudClick: (Long) -> Unit,
     onBack: () -> Unit
 ) {
     val solicitudes by viewModel.solicitudes.collectAsState()
+    val isAdmin = userRole == UserRole.ADMIN
     var solicitudPendienteDeEliminar by remember { mutableStateOf<SolicitudEntity?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedFiltroEstado by remember { mutableStateOf("Todas") }
@@ -104,7 +105,7 @@ fun ListaSolicitudesScreen(
         }
     }
 
-    if (solicitudPendienteDeEliminar != null) {
+    if (solicitudPendienteDeEliminar != null && !isAdmin) {
         AlertDialog(
             onDismissRequest = { solicitudPendienteDeEliminar = null },
             title = { Text("Eliminar solicitud") },
@@ -147,12 +148,12 @@ fun ListaSolicitudesScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Módulo de Solicitudes",
+                                text = if (isAdmin) "Revisar Solicitudes" else "Mis Solicitudes",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Gestión y seguimiento de requerimientos",
+                                text = if (isAdmin) "Vista de Administrador (Sin permiso de borrado)" else "Gestiona y modifica tus requerimientos",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -171,6 +172,17 @@ fun ListaSolicitudesScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
+        },
+        floatingActionButton = {
+            if (!isAdmin) {
+                FloatingActionButton(
+                    onClick = onNavigateToForm,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Nueva Solicitud")
+                }
+            }
         }
     ) { paddingValues ->
         Column(
@@ -210,7 +222,7 @@ fun ListaSolicitudesScreen(
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        StatBadge(label = "Recibidas", count = solicitudes.count { it.estado == "Recibida" })
+                        StatBadge(label = "Recibidas", count = solicitudes.count { it.estado.equals("Recibida", ignoreCase = true) })
                         StatBadge(label = "Filtradas", count = solicitudesFiltradas.size)
                     }
                 }
@@ -249,7 +261,7 @@ fun ListaSolicitudesScreen(
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val opcionesFiltro = listOf("Todas", "Recibida", "En Proceso", "Resuelta")
+                val opcionesFiltro = listOf("Todas", "Recibida", "En Proceso", "Resuelta", "Cerrado")
                 items(opcionesFiltro) { filtro ->
                     FilterChip(
                         selected = selectedFiltroEstado == filtro,
@@ -304,12 +316,22 @@ fun ListaSolicitudesScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (solicitudes.isEmpty()) "No hay solicitudes registradas en el sistema actualmente."
-                            else "Prueba ajustando los términos de búsqueda o el filtro seleccionado.",
+                            text = if (solicitudes.isEmpty()) {
+                                if (isAdmin) "Aún no se han registrado solicitudes en la base de datos."
+                                else "Crea tu primera solicitud presionando el botón + o desde el menú principal."
+                            } else "Prueba ajustando los términos de búsqueda o el filtro seleccionado.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
+                        if (solicitudes.isEmpty() && !isAdmin) {
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Button(onClick = onNavigateToForm) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Registrar Nueva Solicitud")
+                            }
+                        }
                     }
                 }
             } else {
@@ -325,6 +347,7 @@ fun ListaSolicitudesScreen(
                         ) {
                             SolicitudCardItem(
                                 solicitud = solicitud,
+                                canDelete = !isAdmin,
                                 onClick = { onSolicitudClick(solicitud.id) },
                                 onDelete = { solicitudPendienteDeEliminar = solicitud }
                             )
@@ -365,6 +388,7 @@ fun StatBadge(label: String, count: Int) {
 @Composable
 fun SolicitudCardItem(
     solicitud: SolicitudEntity,
+    canDelete: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -487,14 +511,25 @@ fun SolicitudCardItem(
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
+
+                if (!solicitud.motivoCierre.isNullOrEmpty()) {
+                    Text(
+                        text = "Motivo cierre: ${solicitud.motivoCierre}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                )
+            if (canDelete) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    )
+                }
             }
         }
     }
@@ -506,6 +541,7 @@ fun EstadoChip(estado: String) {
         "recibida" -> StatusRecibidaBg to StatusRecibidaFg
         "en proceso" -> StatusEnProcesoBg to StatusEnProcesoFg
         "resuelta" -> StatusResueltaBg to StatusResueltaFg
+        "cerrado", "cerrada" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
         else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
     }
 

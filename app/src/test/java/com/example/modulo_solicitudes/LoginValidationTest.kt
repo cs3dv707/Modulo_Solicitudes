@@ -2,6 +2,7 @@ package com.example.modulo_solicitudes
 
 import com.example.modulo_solicitudes.ui.login.LoginValidation
 import com.example.modulo_solicitudes.ui.login.LoginViewModel
+import com.example.modulo_solicitudes.ui.login.UserRole
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -41,19 +42,28 @@ class LoginValidationTest {
     fun validAdminUsernameCredentials_accepted() {
         assertTrue(LoginValidation.validateCredentials("admin", "admin"))
         assertTrue(LoginValidation.validateCredentials("ADMIN", "admin123"))
+        assertEquals(UserRole.ADMIN, LoginValidation.getRoleForCredentials("admin", "admin"))
     }
 
     @Test
     fun validAdminEmailCredentials_accepted() {
         assertTrue(LoginValidation.validateCredentials("admin@admin.com", "admin"))
         assertTrue(LoginValidation.validateCredentials("ADMIN@ADMIN.COM", "admin123"))
+        assertEquals(UserRole.ADMIN, LoginValidation.getRoleForCredentials("admin@admin.com", "admin"))
+    }
+
+    @Test
+    fun validUserCredentials_accepted() {
+        assertTrue(LoginValidation.validateCredentials("usuario", "usuario"))
+        assertTrue(LoginValidation.validateCredentials("user", "123456"))
+        assertEquals(UserRole.USER, LoginValidation.getRoleForCredentials("usuario", "usuario"))
     }
 
     @Test
     fun invalidUserOrPassword_rejected() {
-        assertFalse(LoginValidation.validateCredentials("user", "admin"))
-        assertFalse(LoginValidation.validateCredentials("admin", "wrongpass"))
         assertFalse(LoginValidation.validateCredentials("user", "wrongpass"))
+        assertFalse(LoginValidation.validateCredentials("admin", "wrongpass"))
+        assertFalse(LoginValidation.validateCredentials("desconocido", "12345"))
     }
 
     @Test
@@ -65,6 +75,22 @@ class LoginValidationTest {
 
         val state = viewModel.uiState.value
         assertTrue(state.isSuccess)
+        assertEquals(UserRole.ADMIN, state.loggedRole)
+        assertNull(state.generalError)
+        assertNull(state.usuarioError)
+        assertNull(state.passwordError)
+    }
+
+    @Test
+    fun viewModel_loginSuccessWithUser() {
+        val viewModel = LoginViewModel()
+        viewModel.onUsuarioChanged("usuario")
+        viewModel.onPasswordChanged("usuario")
+        viewModel.onLoginClick()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isSuccess)
+        assertEquals(UserRole.USER, state.loggedRole)
         assertNull(state.generalError)
         assertNull(state.usuarioError)
         assertNull(state.passwordError)

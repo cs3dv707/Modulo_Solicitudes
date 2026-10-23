@@ -8,6 +8,7 @@ data class SolicitudUiState(
     val categoria: String = "",
     val servicio: String = "",
     val evidenciaUri: String? = null,
+    val motivoCierre: String? = null,
 
     val tituloError: String? = null,
     val descripcionError: String? = null,
@@ -17,5 +18,9 @@ data class SolicitudUiState(
     val guardando: Boolean = false,
     val guardadoExitosamente: Boolean = false,
     val guardadoError: String? = null,
-    val solicitudSeleccionada: SolicitudEntity? = null
+    val solicitudSeleccionada: SolicitudEntity? = null,
+
+    val isEditing: Boolean = false,
+    val idSolicitudEditando: Long? = null
 )
+

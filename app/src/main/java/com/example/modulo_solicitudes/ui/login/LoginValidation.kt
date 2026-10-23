@@ -14,6 +14,12 @@ object LoginValidation {
     const val ADMIN_PASSWORD = "admin"
     const val ADMIN_PASSWORD_ALT = "admin123"
 
+    const val USER_USERNAME = "usuario"
+    const val USER_USERNAME_ALT = "user"
+    const val USER_EMAIL = "usuario@correo.com"
+    const val USER_PASSWORD = "usuario"
+    const val USER_PASSWORD_ALT = "usuario123"
+
     fun validateFields(usuario: String, password: String): LoginValidationResult {
         val trimmedUsuario = usuario.trim()
 
@@ -31,12 +37,32 @@ object LoginValidation {
         )
     }
 
-    fun validateCredentials(usuario: String, password: String): Boolean {
+    fun getRoleForCredentials(usuario: String, password: String): UserRole? {
         val trimmedUsuario = usuario.trim()
-        val isCorrectUser = trimmedUsuario.equals(ADMIN_USERNAME, ignoreCase = true) ||
+        val isAdminUser = trimmedUsuario.equals(ADMIN_USERNAME, ignoreCase = true) ||
                 trimmedUsuario.equals(ADMIN_EMAIL, ignoreCase = true)
-        val isCorrectPassword = password == ADMIN_PASSWORD || password == ADMIN_PASSWORD_ALT
+        val isAdminPass = password == ADMIN_PASSWORD || password == ADMIN_PASSWORD_ALT
 
-        return isCorrectUser && isCorrectPassword
+        if (isAdminUser && isAdminPass) {
+            return UserRole.ADMIN
+        }
+
+        val isStandardUser = trimmedUsuario.equals(USER_USERNAME, ignoreCase = true) ||
+                trimmedUsuario.equals(USER_USERNAME_ALT, ignoreCase = true) ||
+                trimmedUsuario.equals(USER_EMAIL, ignoreCase = true) ||
+                trimmedUsuario.startsWith("user", ignoreCase = true) ||
+                trimmedUsuario.startsWith("usuario", ignoreCase = true)
+        val isUserPass = password == USER_PASSWORD || password == USER_PASSWORD_ALT ||
+                password == "user" || password == "123456"
+
+        if (isStandardUser && isUserPass) {
+            return UserRole.USER
+        }
+
+        return null
+    }
+
+    fun validateCredentials(usuario: String, password: String): Boolean {
+        return getRoleForCredentials(usuario, password) != null
     }
 }

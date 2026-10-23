@@ -55,18 +55,19 @@ class LoginViewModel : ViewModel() {
             return
         }
 
-        val areCredentialsValid = LoginValidation.validateCredentials(
+        val role = LoginValidation.getRoleForCredentials(
             currentState.usuario,
             currentState.password
         )
 
-        if (areCredentialsValid) {
+        if (role != null) {
             _uiState.update {
                 it.copy(
                     usuarioError = null,
                     passwordError = null,
                     generalError = null,
-                    isSuccess = true
+                    isSuccess = true,
+                    loggedRole = role
                 )
             }
         } else {

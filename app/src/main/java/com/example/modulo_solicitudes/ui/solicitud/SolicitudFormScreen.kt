@@ -113,7 +113,8 @@ fun SolicitudFormScreen(
 
     LaunchedEffect(showSavedConfirmation) {
         if (showSavedConfirmation) {
-            snackbarHostState.showSnackbar("Solicitud registrada correctamente")
+            val mensaje = if (uiState.isEditing) "Solicitud modificada correctamente" else "Solicitud registrada correctamente"
+            snackbarHostState.showSnackbar(mensaje)
             delay(700)
             onBack()
         }
@@ -156,7 +157,12 @@ fun SolicitudFormScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("Registrar Solicitud", fontWeight = FontWeight.Bold) },
+                    title = {
+                        Text(
+                            text = if (uiState.isEditing) "Modificar Solicitud" else "Registrar Solicitud",
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
@@ -200,7 +206,7 @@ fun SolicitudFormScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "¡Solicitud guardada exitosamente!",
+                                text = if (uiState.isEditing) "¡Solicitud actualizada exitosamente!" else "¡Solicitud guardada exitosamente!",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -524,7 +530,7 @@ fun SolicitudFormScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Botón Guardar
+                // Botón Guardar / Actualizar
                 Button(
                     onClick = {
                         viewModel.guardarSolicitud { showSavedConfirmation = true }
@@ -536,7 +542,9 @@ fun SolicitudFormScreen(
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
-                        text = if (uiState.guardando) "Guardando..." else "Guardar Solicitud",
+                        text = if (uiState.guardando) "Guardando..."
+                        else if (uiState.isEditing) "Guardar Cambios"
+                        else "Guardar Solicitud",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

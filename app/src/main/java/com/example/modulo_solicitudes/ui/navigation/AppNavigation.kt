@@ -2,6 +2,8 @@ package com.example.modulo_solicitudes.ui.navigation
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +33,8 @@ fun AppNavigation(database: AppDatabase) {
         factory = SolicitudViewModel.provideFactory(repository)
     )
     val loginViewModel: LoginViewModel = viewModel()
+    val loginUiState by loginViewModel.uiState.collectAsState()
+    val userRole = loginUiState.loggedRole
 
     NavHost(
         navController = navController,
@@ -49,6 +53,7 @@ fun AppNavigation(database: AppDatabase) {
 
         composable("menu") {
             MenuScreen(
+                userRole = userRole,
                 onNavigateToLista = {
                     navController.navigate("lista_solicitudes")
                 },
@@ -70,6 +75,7 @@ fun AppNavigation(database: AppDatabase) {
 
         composable("lista_solicitudes") {
             ListaSolicitudesScreen(
+                userRole = userRole,
                 viewModel = solicitudViewModel,
                 onSolicitudClick = { solicitudId ->
                     navController.navigate("detalle_solicitud/$solicitudId")
@@ -126,8 +132,12 @@ fun AppNavigation(database: AppDatabase) {
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getLong("solicitudId") ?: 0L
             SolicitudDetailScreen(
+                userRole = userRole,
                 solicitudId = id,
                 viewModel = solicitudViewModel,
+                onNavigateToEdit = {
+                    navController.navigate("formulario_solicitud")
+                },
                 onBack = {
                     navController.popBackStack()
                 }

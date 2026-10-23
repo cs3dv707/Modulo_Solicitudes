@@ -99,6 +99,38 @@ class SolicitudViewModel(private val repository: SolicitudRepository) : ViewMode
         return result.isValid
     }
 
+    fun cargarSolicitudParaEdicion(solicitud: SolicitudEntity) {
+        _uiState.update {
+            it.copy(
+                titulo = solicitud.titulo,
+                descripcion = solicitud.descripcion,
+                categoria = solicitud.categoria,
+                servicio = solicitud.servicio,
+                evidenciaUri = solicitud.evidenciaUri,
+                motivoCierre = solicitud.motivoCierre,
+                isEditing = true,
+                idSolicitudEditando = solicitud.id,
+                solicitudSeleccionada = solicitud,
+                tituloError = null,
+                descripcionError = null,
+                categoriaError = null,
+                servicioError = null,
+                guardadoError = null
+            )
+        }
+    }
+
+    fun actualizarEstadoSolicitud(solicitud: SolicitudEntity, nuevoEstado: String, motivoCierre: String? = null) {
+        viewModelScope.launch {
+            val solicitudActualizada = solicitud.copy(
+                estado = nuevoEstado,
+                motivoCierre = if (nuevoEstado.equals("Cerrado", ignoreCase = true) || nuevoEstado.equals("Cerrada", ignoreCase = true)) motivoCierre else null
+            )
+            repository.updateSolicitud(solicitudActualizada)
+            _uiState.update { it.copy(solicitudSeleccionada = solicitudActualizada) }
+        }
+    }
+
     fun guardarSolicitud(onSuccess: () -> Unit) {
         if (!validarFormulario()) return
 
@@ -106,31 +138,60 @@ class SolicitudViewModel(private val repository: SolicitudRepository) : ViewMode
         _uiState.update { it.copy(guardando = true, guardadoError = null) }
 
         viewModelScope.launch {
-            val codigoGenerado = "SOL-${System.currentTimeMillis().toString().takeLast(5)}"
-            val nuevaSolicitud = SolicitudEntity(
-                codigo = codigoGenerado,
-                titulo = state.titulo.trim(),
-                descripcion = state.descripcion.trim(),
-                categoria = state.categoria.trim(),
-                servicio = state.servicio.trim(),
-                evidenciaUri = state.evidenciaUri,
-                estado = "Recibida",
-                fechaHora = System.currentTimeMillis()
-            )
-
-            val result = repository.insertSolicitud(nuevaSolicitud)
-            result.onSuccess {
-                _uiState.update {
-                    it.copy(guardando = false, guardadoExitosamente = true)
-                }
-                onSuccess()
-            }.onFailure { error ->
-                _uiState.update {
-                    it.copy(
-                        guardando = false,
-                        guardadoError = error.localizedMessage
-                            ?: "No se pudo guardar la solicitud. Intenta nuevamente."
+            if (state.isEditing && state.idSolicitudEditando != null) {
+                val solicitudExistente = state.solicitudSeleccionada
+                if (solicitudExistente != null) {
+                    val solicitudActualizada = solicitudExistente.copy(
+                        titulo = state.titulo.trim(),
+                        descripcion = state.descripcion.trim(),
+                        categoria = state.categoria.trim(),
+                        servicio = state.servicio.trim(),
+                        evidenciaUri = state.evidenciaUri
                     )
+                    runCatching {
+                        repository.updateSolicitud(solicitudActualizada)
+                    }.onSuccess {
+                        _uiState.update {
+                            it.copy(guardando = false, guardadoExitosamente = true)
+                        }
+                        onSuccess()
+                    }.onFailure { error ->
+                        _uiState.update {
+                            it.copy(
+                                guardando = false,
+                                guardadoError = error.localizedMessage
+                                    ?: "No se pudo actualizar la solicitud."
+                            )
+                        }
+                    }
+                }
+            } else {
+                val codigoGenerado = "SOL-${System.currentTimeMillis().toString().takeLast(5)}"
+                val nuevaSolicitud = SolicitudEntity(
+                    codigo = codigoGenerado,
+                    titulo = state.titulo.trim(),
+                    descripcion = state.descripcion.trim(),
+                    categoria = state.categoria.trim(),
+                    servicio = state.servicio.trim(),
+                    evidenciaUri = state.evidenciaUri,
+                    estado = "Recibida",
+                    fechaHora = System.currentTimeMillis()
+                )
+
+                val result = repository.insertSolicitud(nuevaSolicitud)
+                result.onSuccess {
+                    _uiState.update {
+                        it.copy(guardando = false, guardadoExitosamente = true)
+                    }
+                    onSuccess()
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            guardando = false,
+                            guardadoError = error.localizedMessage
+                                ?: "No se pudo guardar la solicitud. Intenta nuevamente."
+                        )
+                    }
                 }
             }
         }

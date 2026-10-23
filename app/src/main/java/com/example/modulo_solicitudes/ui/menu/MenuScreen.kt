@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,15 +41,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.modulo_solicitudes.ui.login.UserRole
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuScreen(
+    userRole: UserRole,
     onNavigateToLista: () -> Unit,
     onNavigateToQrScanner: () -> Unit,
     onNavigateToForm: () -> Unit,
     onLogout: () -> Unit
 ) {
+    val isAdmin = userRole == UserRole.ADMIN
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -61,7 +66,7 @@ fun MenuScreen(
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    imageVector = Icons.Default.AdminPanelSettings,
+                                    imageVector = if (isAdmin) Icons.Default.AdminPanelSettings else Icons.Default.Person,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(22.dp)
@@ -71,7 +76,7 @@ fun MenuScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Menú Principal",
+                                text = if (isAdmin) "Menú Administrador" else "Menú Usuario",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -102,7 +107,7 @@ fun MenuScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = if (isAdmin) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.tertiaryContainer
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -112,14 +117,14 @@ fun MenuScreen(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(48.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Default.AdminPanelSettings,
+                                imageVector = if (isAdmin) Icons.Default.AdminPanelSettings else Icons.Default.Person,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                                tint = if (isAdmin) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onTertiary,
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -127,64 +132,92 @@ fun MenuScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "¡Bienvenido, Administrador!",
+                            text = if (isAdmin) "¡Bienvenido, Administrador!" else "¡Bienvenido, Usuario!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = if (isAdmin) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Text(
-                            text = "Seleccione una opción para comenzar a gestionar el sistema.",
+                            text = if (isAdmin)
+                                "Consulte las solicitudes recibidas y gestione sus estados."
+                            else
+                                "Cree solicitudes, adjunte información o gestione sus requerimientos.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            color = if (isAdmin)
+                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            else
+                                MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                         )
                     }
                 }
             }
 
             Text(
-                text = "Opciones disponibles",
+                text = "Opciones del sistema",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 4.dp, top = 8.dp)
             )
 
-            // Menu Item 1: Listado de Solicitudes
-            MenuItemCard(
-                title = "Listado de Solicitudes",
-                subtitle = "Ver, buscar, filtrar y gestionar todas las solicitudes registradas",
-                icon = Icons.AutoMirrored.Filled.Assignment,
-                iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                onClick = onNavigateToLista
-            )
+            if (isAdmin) {
+                // Admin Option 1: Revisar y Gestionar Solicitudes
+                MenuItemCard(
+                    title = "Revisar y Gestionar Solicitudes",
+                    subtitle = "Revisar listado de requerimientos y cambiar su estado (En proceso, Cerrado, etc.)",
+                    icon = Icons.AutoMirrored.Filled.Assignment,
+                    iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    onClick = onNavigateToLista
+                )
 
-            // Menu Item 2: Escanear Código QR
-            MenuItemCard(
-                title = "Escanear Código QR",
-                subtitle = "Buscar y consultar detalles de una solicitud mediante la cámara",
-                icon = Icons.Default.QrCodeScanner,
-                iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
-                onClick = onNavigateToQrScanner
-            )
+                // Admin Option 2: Escanear Código QR
+                MenuItemCard(
+                    title = "Escanear Código QR",
+                    subtitle = "Consultar los detalles de una solicitud mediante el escáner de la cámara",
+                    icon = Icons.Default.QrCodeScanner,
+                    iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    onClick = onNavigateToQrScanner
+                )
+            } else {
+                // User Option 1: Crear Nueva Solicitud
+                MenuItemCard(
+                    title = "Registrar Nueva Solicitud",
+                    subtitle = "Crear un nuevo requerimiento o reporte de soporte con o sin imagen adjunta",
+                    icon = Icons.Default.AddCard,
+                    iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick = onNavigateToForm
+                )
 
-            // Menu Item 3: Crear Nueva Solicitud
-            MenuItemCard(
-                title = "Registrar Nueva Solicitud",
-                subtitle = "Crear un nuevo requerimiento o solicitud de soporte técnico",
-                icon = Icons.Default.AddCard,
-                iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = onNavigateToForm
-            )
+                // User Option 2: Ver Mis Solicitudes (Modificar/Borrar)
+                MenuItemCard(
+                    title = "Mis Solicitudes",
+                    subtitle = "Ver listado de solicitudes, modificar para adjuntar información o eliminar sus solicitudes",
+                    icon = Icons.AutoMirrored.Filled.Assignment,
+                    iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    onClick = onNavigateToLista
+                )
+
+                // User Option 3: Escanear QR
+                MenuItemCard(
+                    title = "Escanear Código QR",
+                    subtitle = "Buscar y consultar información de solicitudes leyendo código QR",
+                    icon = Icons.Default.QrCodeScanner,
+                    iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    onClick = onNavigateToQrScanner
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Menu Item 4: Cerrar Sesión
+            // Option: Cerrar Sesión
             MenuItemCard(
                 title = "Cerrar Sesión",
-                subtitle = "Salir de la cuenta de administrador y volver al login",
+                subtitle = "Salir del menú actual y regresar al inicio de sesión",
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
                 iconContainerColor = MaterialTheme.colorScheme.errorContainer,
                 iconTint = MaterialTheme.colorScheme.onErrorContainer,
