@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
@@ -81,9 +82,8 @@ import java.util.Locale
 fun ListaSolicitudesScreen(
     viewModel: SolicitudViewModel,
     onNavigateToForm: () -> Unit,
-    onNavigateToQrScanner: () -> Unit,
     onSolicitudClick: (Long) -> Unit,
-    onLogout: () -> Unit = {}
+    onBack: () -> Unit
 ) {
     val solicitudes by viewModel.solicitudes.collectAsState()
     var solicitudPendienteDeEliminar by remember { mutableStateOf<SolicitudEntity?>(null) }
@@ -160,19 +160,11 @@ fun ListaSolicitudesScreen(
                         }
                     }
                 },
-                actions = {
-                    IconButton(onClick = onNavigateToQrScanner) {
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = "Escanear QR de Solicitud",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    IconButton(onClick = onLogout) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
-                            tint = MaterialTheme.colorScheme.error
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver al menú principal"
                         )
                     }
                 },

@@ -14,6 +14,7 @@ import com.example.modulo_solicitudes.data.local.AppDatabase
 import com.example.modulo_solicitudes.data.repository.SolicitudRepository
 import com.example.modulo_solicitudes.ui.login.LoginScreen
 import com.example.modulo_solicitudes.ui.login.LoginViewModel
+import com.example.modulo_solicitudes.ui.menu.MenuScreen
 import com.example.modulo_solicitudes.ui.solicitud.ListaSolicitudesScreen
 import com.example.modulo_solicitudes.ui.solicitud.QrScannerScreen
 import com.example.modulo_solicitudes.ui.solicitud.SolicitudDetailScreen
@@ -39,8 +40,29 @@ fun AppNavigation(database: AppDatabase) {
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginSuccess = {
-                    navController.navigate("lista_solicitudes") {
+                    navController.navigate("menu") {
                         popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable("menu") {
+            MenuScreen(
+                onNavigateToLista = {
+                    navController.navigate("lista_solicitudes")
+                },
+                onNavigateToQrScanner = {
+                    navController.navigate("escanear_qr")
+                },
+                onNavigateToForm = {
+                    solicitudViewModel.resetFormulario()
+                    navController.navigate("formulario_solicitud")
+                },
+                onLogout = {
+                    loginViewModel.resetState()
+                    navController.navigate("login") {
+                        popUpTo("menu") { inclusive = true }
                     }
                 }
             )
@@ -53,17 +75,11 @@ fun AppNavigation(database: AppDatabase) {
                     solicitudViewModel.resetFormulario()
                     navController.navigate("formulario_solicitud")
                 },
-                onNavigateToQrScanner = {
-                    navController.navigate("escanear_qr")
-                },
                 onSolicitudClick = { solicitudId ->
                     navController.navigate("detalle_solicitud/$solicitudId")
                 },
-                onLogout = {
-                    loginViewModel.resetState()
-                    navController.navigate("login") {
-                        popUpTo("lista_solicitudes") { inclusive = true }
-                    }
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
